@@ -1,0 +1,33 @@
+[config]
+shell="cmd"
+coding="gbk"
+
+[[snippets]]
+description="echo 1"
+command="echo 123 中文"
+
+[[snippets]]
+description="echo 2"
+command="echo 123 中文 & echo 456"
+
+[[snippets]]
+description="list files"
+command="ls -l"
+
+[[snippets]]
+description="list dir"
+command="dir"
+
+[[snippets]]
+description="ping"
+command="ping 127.0.0.1"
+
+
+[[snippets]]
+description="list file names"
+command="ls -1"
+username="root"
+host="192.168.6.2"
+foo = 12
+bar = 144
+
