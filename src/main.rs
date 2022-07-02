@@ -8,7 +8,7 @@ use std::string::String;
 use std::io::{BufRead, BufReader, ErrorKind, Read};
 use std::net::TcpStream;
 use inquire::error::{InquireError, InquireResult};
-use inquire::Select;
+use inquire::{Select, Text};
 use toml::{from_str, Value};
 use toml::value::Table;
 use ssh2::Session;
@@ -21,7 +21,7 @@ use tinytemplate::TinyTemplate;
 use encoding::all::GBK;
 use encoding::{Encoding, EncoderTrap, DecoderTrap};
 use serde::de::Unexpected::Str;
-
+use regex::Regex;
 
 
 #[derive(Deserialize, Debug)]
@@ -66,13 +66,31 @@ fn display_buffer(buffer:&[u8], coding:String) {
     }
 }
 
+fn apply_template(template: String, var_map:HashMap<String, String>) -> String {
+    let mut tt = TinyTemplate::new();
+    tt.add_template("hello", template.as_str()).unwrap();
+
+    let rendered = tt.render("hello", &var_map).unwrap();
+    println!("{}", rendered);
+    rendered
+}
+
 // rust Continuously process child process' outputs
 fn execute_command(shell: &String, snpt: Snippet) {
-    println!("execute_command: {} {:?}", shell, snpt);
+    let mut run_cmd = snpt.command.to_string();
+    let vars_in_cmd = check_variables(snpt.command.as_str());
+    let vars_map;
+    if vars_in_cmd.len()>0 {
+        vars_map = input_variables_then_to_map(vars_in_cmd);
+        println!("vars_map: {:?}", vars_map);
+        run_cmd = apply_template(snpt.command, vars_map).to_string();
+    }
+
+    println!("execute_command: {} {:?}", shell, run_cmd);
     let output = match shell.as_str() {
         "cmd" => {
             Command::new(shell).arg("/C")
-                .args(snpt.command.split(' '))
+                .args(run_cmd.split(' '))
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap()
@@ -81,7 +99,7 @@ fn execute_command(shell: &String, snpt: Snippet) {
         },
         _ => {
             Command::new(shell)
-                .args(snpt.command.split(' '))
+                .args(run_cmd.split(' '))
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap()
@@ -89,9 +107,6 @@ fn execute_command(shell: &String, snpt: Snippet) {
                 .unwrap()
         }
     };
-
-
-    // .ok_or_else(|| Error::new(ErrorKind::Other,"Could not capture standard output."))?;
 
     let mut reader = BufReader::new(output);
 
@@ -106,7 +121,33 @@ fn execute_command(shell: &String, snpt: Snippet) {
         if consumed==0 { break; }
     }
 
-    // println!("finish")
+    println!("fn finish")
+}
+
+fn check_variables(cmd: &str) -> Vec<String> {
+    let re = Regex::new(r"\{((?:.|\r?\n)+?)\}").unwrap();
+    println!("check_variables");
+    let mut variables_vec: Vec<String> = Vec::new();
+    for cap in re.captures_iter(cmd) {
+        println!("{:?} - [{}]", &cap[0], &cap[1]);
+        variables_vec.push(cap[1].trim().to_string())
+    }
+    variables_vec
+}
+
+fn input_variables_then_to_map(variables_vec: Vec<String>) -> HashMap<String, String> {
+    let mut var_map = HashMap::new();
+    for v in variables_vec {
+        let replace_value = Text::new(v.as_str()).prompt();
+        match replace_value {
+            Ok(replace_value) => {
+                println!("Input {}", replace_value);
+                var_map.insert(v, replace_value);
+            },
+            Err(_) => println!("An error happened when asking for your name, try again later."),
+        }
+    }
+    var_map
 }
 
 fn main() {
@@ -121,7 +162,7 @@ fn main() {
     parsed_values.as_table();
 
     println!("{}",parsed_values["config"]);
-
+    println!("parsed_values[snippets]");
     for x in parsed_values["snippets"].as_array() {
         println!("{:?}", x.as_slice());
     }
@@ -130,6 +171,13 @@ fn main() {
     println!("{:?}", snippet_items.config);
 
     let snippets_vec = snippet_items.snippets;
+    println!("snippets_vec");
+    for s in &snippets_vec {
+        println!("{}", s.command);
+        let variables_vec = check_variables(s.command.as_str());
+        println!("{:?}, length:{}", variables_vec, variables_vec.len());
+    }
+
     let shell_name = snippet_items.config.get("shell").unwrap();
     let formatter: OptionFormatter<Snippet> = &|i| format!("Snippet {}: '{}'", i.index + 1, i);
     let ans: InquireResult<Snippet> = Select::new("Select configuration:", snippets_vec)
@@ -142,33 +190,11 @@ fn main() {
     match ans {
         Ok(snippet) => {
             let output = execute_command(shell_name, snippet);
-            println!("{:?}", output);
+            println!("result output: {:?}", output);
         },
         Err(err) => println!("error:{:?}", err)
     }
 
-    // println!("finished");
-    
-    // match parsed_values_str {
-    //     Some(x) => println!("Some: x={:?}", x),
-    //     None => println!("None")
-    // }
-    // for s in parsed_values_str {
-    //     println!("{:?}", s);
-    // }
-
-
-    // println!("{}",parsed_values["commands"]);
-
-    // static TEMPLATE : &'static str = "Hello {name}!";
-    // let mut tt = TinyTemplate::new();
-    // tt.add_template("hello", TEMPLATE).expect("add template error");
-    // let mut context = HashMap::new();
-    // context.insert("name".to_string(), "Json".to_string());
-    // let rendered = tt.render("hello", &context).unwrap();
-    // println!("{}", rendered);
-
-
-
+    println!("finished");
 
 }

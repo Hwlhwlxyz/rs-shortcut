@@ -1,0 +1,18 @@
+[config]
+shell="sh"
+coding="utf8"
+
+[[snippets]]
+description="echo 1"
+command="echo 123 中文"
+
+[[snippets]]
+description="echo 2"
+command="echo 123 中文 & echo 456"
+
+[[snippets]]
+description="list files"
+command="ls -l"
+
+
+
