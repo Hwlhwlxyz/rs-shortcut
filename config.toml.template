@@ -1,6 +1,6 @@
 [config]
-shell="sh"
-coding="utf8"
+shell="cmd"
+
 
 [[snippets]]
 description="echo 1"
@@ -14,5 +14,15 @@ command="echo 123 中文 & echo 456"
 description="list files"
 command="ls -l"
 
+[[snippets]]
+description="list dir"
+command="dir"
 
+[[snippets]]
+description="ping"
+command="ping 127.0.0.1"
+
+[[snippets]]
+description="ping variable"
+command="ping {ip}"
 
