@@ -1,16 +1,13 @@
-
-
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 use std::fmt::*;
-use std::fs;
+use std::{env, fs};
+use std::path::{Path, PathBuf};
 use std::string::String;
 use inquire::error::{InquireResult};
 use inquire::{Select};
-use toml::{from_str};
 use inquire::formatter::OptionFormatter;
-
-
+use toml::from_str;
 
 mod snippet;
 pub use crate::snippet::Snippet as Snippet;
@@ -23,8 +20,32 @@ struct Configuration {
     snippets: Vec<Snippet>
 }
 
+fn find_config_path() -> PathBuf {
+    let home_path = dirs::home_dir().unwrap();
+    let exe_path = env::current_exe().unwrap();
+    // let home_config_path = home_path.join("config.toml");
+    // home_config_path.is_file()
+    let path_list = [
+        home_path.join("rs_shortcut.toml"),
+        exe_path.join("./rs_shortcut.toml"),
+        exe_path.join("config.toml"),
+        Path::new("./rs_shortcut.toml").to_path_buf(),
+        Path::new("./config.toml").to_path_buf(),
+    ];
+    for possible_path in path_list {
+        println!("{:?}", possible_path);
+        if possible_path.is_file() {
+            return possible_path
+        }
+    }
+    println!("please create config file ($HOME/rs_shortcut.toml, ./config.toml, ./rs_shortcut.toml)");
+    panic!("config file not found!");
+}
+
 fn main() {
-    let filename = "./config.toml";
+
+    // let filename = "./config.toml";
+    let filename = find_config_path();
     let contents = fs::read_to_string(filename)
         .expect("Something went wrong reading the file");
     let snippet_items: Configuration = from_str(&*contents).unwrap();
