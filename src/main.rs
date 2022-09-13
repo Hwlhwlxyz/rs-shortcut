@@ -9,9 +9,11 @@ use inquire::{Select};
 use inquire::formatter::OptionFormatter;
 use toml::from_str;
 
-mod snippet;
-pub use crate::snippet::Snippet as Snippet;
+
+
 mod util;
+mod models;
+pub use crate::models::snippet::Snippet as Snippet;
 pub use crate::util::execution as execution;
 
 #[derive(Deserialize, Debug)]
@@ -33,7 +35,7 @@ fn find_config_path() -> PathBuf {
         Path::new("./config.toml").to_path_buf(),
     ];
     for possible_path in path_list {
-        println!("{:?}", possible_path);
+        // println!("{:?}", possible_path);
         if possible_path.is_file() {
             return possible_path
         }

@@ -9,7 +9,7 @@ pub fn execute_command(shell: &String, snpt: Snippet) {
 
     if run_cmd.starts_with("ssh ")  { // if use ssh to connect to other servers
         Command::new("ssh")
-            .arg(&run_cmd[4..run_cmd.len()])
+            .args(run_cmd[4..run_cmd.len()].split_whitespace())
             .spawn().unwrap()
             .wait().unwrap();
     }
