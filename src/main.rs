@@ -59,6 +59,9 @@ fn main() {
         .with_help_message("help message")
         .prompt();
 
+    let current_path = env::current_dir().unwrap();
+    println!("The current directory is {}", current_path.display());
+    assert!(env::set_current_dir(&current_path).is_ok());
     match ans {
         Ok(snippet) => {
             execution::execute_command(shell_name, snippet);
