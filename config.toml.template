@@ -5,10 +5,12 @@ shell="cmd"
 [[snippets]]
 description="echo 1"
 command="echo 123 中文"
+tag = [ "all", 'tag1' ]
 
 [[snippets]]
 description="echo 2"
 command="echo 123 中文 & echo 456"
+tag = [ "all", 'tag2' ]
 
 [[snippets]]
 description="list files"
